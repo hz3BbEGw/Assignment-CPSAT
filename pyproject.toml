@@ -1,0 +1,22 @@
+[project]
+name = "cpsat"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "hz3BbEGw", email = "olekmasojc1@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.128.0",
+    "ortools>=9.14.6206",
+    "pydantic>=2.12.5",
+    "uvicorn[standard]>=0.40.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/assignment"]
