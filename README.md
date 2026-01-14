@@ -22,10 +22,28 @@ uv sync
 
 ## Usage
 
-Create a JSON file with your data (see `examples/sample_input.json`) and run:
+### Command Line Interface
+
+Create a JSON file (see `examples/sample_input.json`) and run:
 
 ```bash
 uv run python -m src.assignment.main path/to/input.json
+```
+
+### REST API Server
+
+Start the server with:
+
+```bash
+uv run python -m src.assignment.main --serve
+```
+
+You can access the API documentation at `http://localhost:8000/docs`. You can test the endpoint using `curl`:
+
+```bash
+curl -X POST http://localhost:8000/solve \
+     -H "Content-Type: application/json" \
+     -d @examples/sample_input.json
 ```
 
 ### Criteria Types
