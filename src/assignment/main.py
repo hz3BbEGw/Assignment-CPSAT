@@ -1,4 +1,5 @@
 import sys
+import os
 import json
 import argparse
 import uvicorn
@@ -25,14 +26,15 @@ def main():
     parser.add_argument('input_file', nargs='?', help='Path to the input JSON file (or - for stdin)')
     parser.add_argument('--output', help='Path to the output JSON file', default=None)
     parser.add_argument('--serve', action='store_true', help='Start the REST API server')
-    parser.add_argument('--port', type=int, default=8000, help='Port for the server')
+    parser.add_argument('--port', type=int, help='Port for the server')
     parser.add_argument('--host', default="0.0.0.0", help='Host for the server')
     
     args = parser.parse_args()
     
     if args.serve:
-        print(f"Starting server on {args.host}:{args.port}")
-        uvicorn.run(app, host=args.host, port=args.port)
+        port = args.port if args.port is not None else int(os.environ.get("PORT", 8000))
+        print(f"Starting server on {args.host}:{port}")
+        uvicorn.run(app, host=args.host, port=port)
         return
 
     if not args.input_file:
