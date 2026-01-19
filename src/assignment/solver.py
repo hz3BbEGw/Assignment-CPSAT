@@ -184,6 +184,7 @@ def solve_assignment(data: ProblemInput) -> ProblemOutput:
         model.Minimize(sum(penalties))
     
     solver = cp_model.CpSolver()
+    solver.parameters.max_time_in_seconds = 60
     status = solver.Solve(model)
     
     if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
