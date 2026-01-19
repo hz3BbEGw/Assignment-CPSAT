@@ -76,4 +76,5 @@ class AckResponse(BaseModel):
 class CallbackPayload(BaseModel):
     deferredId: str
     assignments: Optional[List[AssignmentResult]] = None
+    stats: Optional[ProblemStats] = None
     error: Optional[str] = None

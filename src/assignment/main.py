@@ -29,6 +29,7 @@ async def run_solver_and_callback(request: DeferredSolveRequest) -> None:
         payload = {
             "deferredId": request.deferredId,
             "assignments": result.model_dump().get("assignments", []),
+            "stats": result.model_dump().get("stats"),
         }
     except Exception as e:
         payload = {"deferredId": request.deferredId, "error": str(e)}
