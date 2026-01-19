@@ -40,12 +40,50 @@ Start the server with:
 uv run python -m src.assignment.main --serve
 ```
 
-You can access the API documentation at `http://localhost:8000/docs`. You can test the endpoint using `curl`:
+You can access the API documentation at `http://localhost:8000/docs`.
+
+### Async REST API
+
+The `/solve` endpoint now accepts a deferred request and returns an immediate acknowledgement. The solver runs in the background and POSTs results (including stats) to your callback URL.
+
+Request shape:
+
+```json
+{
+  "deferredId": "uuid-string",
+  "callbackUrl": "http://localhost:9000/callback",
+  "input": { "num_students": 10, "num_groups": 2, "groups": [], "students": [], "exclude": [] }
+}
+```
+
+Ack response:
+
+```json
+{ "acknowledged": true, "deferredId": "uuid-string" }
+```
+
+Callback payload:
+
+```json
+{
+  "deferredId": "uuid-string",
+  "assignments": [ { "student_id": 0, "group_id": 1 } ],
+  "stats": { "minimize": { "Leadership": { "max_group_avg_diff": 0.2, "max_group_global_diff": 0.1 } } }
+}
+```
+
+Example curl (requires a callback server):
 
 ```bash
 curl -X POST http://localhost:8000/solve \
      -H "Content-Type: application/json" \
-     -d @examples/sample_input.json
+     -d @- <<JSON
+{
+  "deferredId": "00000000-0000-0000-0000-000000000000",
+  "callbackUrl": "http://localhost:9000/callback",
+  "input": $(cat examples/sample_input.json)
+}
+JSON
 ```
 
 ### Criteria Types
