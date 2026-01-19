@@ -63,18 +63,3 @@ class ProblemOutput(BaseModel):
     assignments: List[AssignmentResult]
     status: str
     stats: Optional[ProblemStats] = None
-
-class DeferredSolveRequest(BaseModel):
-    deferredId: str
-    callbackUrl: str
-    input: ProblemInput
-
-class AckResponse(BaseModel):
-    acknowledged: bool
-    deferredId: str
-
-class CallbackPayload(BaseModel):
-    deferredId: str
-    assignments: Optional[List[AssignmentResult]] = None
-    stats: Optional[ProblemStats] = None
-    error: Optional[str] = None

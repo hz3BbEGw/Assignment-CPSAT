@@ -42,47 +42,39 @@ uv run python -m src.assignment.main --serve
 
 You can access the API documentation at `http://localhost:8000/docs`.
 
-### Async REST API
+### REST API
 
-The `/solve` endpoint now accepts a deferred request and returns an immediate acknowledgement. The solver runs in the background and POSTs results (including stats) to your callback URL.
+The `/solve` endpoint accepts a problem input and returns the solution directly (including stats when available).
 
 Request shape:
 
 ```json
 {
-  "deferredId": "uuid-string",
-  "callbackUrl": "http://localhost:9000/callback",
-  "input": { "num_students": 10, "num_groups": 2, "groups": [], "students": [], "exclude": [] }
+  "num_students": 10,
+  "num_groups": 2,
+  "groups": [],
+  "students": [],
+  "exclude": []
 }
 ```
 
-Ack response:
-
-```json
-{ "acknowledged": true, "deferredId": "uuid-string" }
-```
-
-Callback payload:
+Response:
 
 ```json
 {
-  "deferredId": "uuid-string",
   "assignments": [ { "student_id": 0, "group_id": 1 } ],
+  "status": "OPTIMAL",
   "stats": { "minimize": { "Leadership": { "max_group_avg_diff": 0.2, "max_group_global_diff": 0.1 } } }
 }
 ```
 
-Example curl (requires a callback server):
+Example curl:
 
 ```bash
 curl -X POST http://localhost:8000/solve \
      -H "Content-Type: application/json" \
      -d @- <<JSON
-{
-  "deferredId": "00000000-0000-0000-0000-000000000000",
-  "callbackUrl": "http://localhost:9000/callback",
-  "input": $(cat examples/sample_input.json)
-}
+$(cat examples/sample_input.json)
 JSON
 ```
 

@@ -3,49 +3,21 @@ import os
 import json
 import argparse
 import asyncio
-import urllib.request
 import uvicorn
-from fastapi import FastAPI, HTTPException
-from .models import ProblemInput, ProblemOutput, DeferredSolveRequest, AckResponse
+from fastapi import FastAPI
+from .models import ProblemInput, ProblemOutput
 from .solver import solve_assignment
 
 # Initialize FastAPI app
 app = FastAPI(title="Assignment Solver API")
 
-def post_callback(callback_url: str, payload: dict) -> None:
-    data = json.dumps(payload).encode("utf-8")
-    request = urllib.request.Request(
-        callback_url,
-        data=data,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    with urllib.request.urlopen(request, timeout=30) as response:
-        response.read()
-
-async def run_solver_and_callback(request: DeferredSolveRequest) -> None:
-    try:
-        result = await asyncio.to_thread(solve_assignment, request.input)
-        payload = {
-            "deferredId": request.deferredId,
-            "assignments": result.model_dump().get("assignments", []),
-            "stats": result.model_dump().get("stats"),
-        }
-    except Exception as e:
-        payload = {"deferredId": request.deferredId, "error": str(e)}
-
-    try:
-        await asyncio.to_thread(post_callback, request.callbackUrl, payload)
-    except Exception as e:
-        print(f"Callback failed: {e}", file=sys.stderr)
-
-@app.post("/solve", response_model=AckResponse)
-async def solve_endpoint(input_data: DeferredSolveRequest):
+@app.post("/solve", response_model=ProblemOutput)
+async def solve_endpoint(input_data: ProblemInput):
     """
-    Accepts student assignment problem input and returns an ack immediately.
+    Accepts student assignment problem input and returns the solution directly.
     """
-    asyncio.create_task(run_solver_and_callback(input_data))
-    return AckResponse(acknowledged=True, deferredId=input_data.deferredId)
+    result = await asyncio.to_thread(solve_assignment, input_data)
+    return result
 
 def main():
     parser = argparse.ArgumentParser(description='Assign students to groups based on criteria.')
