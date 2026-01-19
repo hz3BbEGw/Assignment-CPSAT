@@ -4,8 +4,10 @@ This project provides a tool to assign students to groups based on various crite
 
 ## Features
 
-- **Hard Constraints**: Ensure a minimum ratio of students meeting a criterion (e.g., language skills).
-- **Maximize/Minimize**: Optimize group averages for specific criteria (e.g., GPA, workload).
+- **Prerequisites**: Ensure all group members meet a minimum requirement (e.g., language skills).
+- **Minimize**: Balance group averages for specific criteria (e.g., GPA, workload).
+- **Pull**: Maximize the total sum of member values for a criterion.
+- **Rankings**: Maximize total student preference for groups.
 - **Flexible Assignment**: Specify which groups each student is eligible for.
 - **Student Exclusion**: Forbid specific pairs of students from being in the same group.
 - **Group Size**: Strict enforcement of group sizes.
@@ -48,9 +50,9 @@ curl -X POST http://localhost:8000/solve \
 
 ### Criteria Types
 
-1. **`constraint`**: Requires `min_ratio` (0.0 to 1.0).
-2. **`minimize`**: Requires `target`. Minimizes the squared penalty for exceeding the target average.
-3. **`maximize`**: Requires `target`. Minimizes the squared penalty for falling below the target average.
+1. **`prerequisite`**: Requires `min_ratio` (0.0 to 1.0). All members of the group must meet it.
+2. **`minimize`**: Balances group averages against the global mean for that criterion.
+3. **`pull`**: Maximizes the total sum of member values for that criterion.
 
 ## Input Format
 
@@ -64,7 +66,7 @@ curl -X POST http://localhost:8000/solve \
       "id": 0,
       "size": 5,
       "criteria": {
-        "french": { "type": "constraint", "min_ratio": 0.4 }
+        "french": { "type": "prerequisite", "min_ratio": 0.4 }
       }
     }
   ],
@@ -72,7 +74,8 @@ curl -X POST http://localhost:8000/solve \
     {
       "id": 0,
       "possible_groups": [0, 1],
-      "values": { "french": 1.0, "gpa": 0.9 }
+      "values": { "french": 1.0, "gpa": 0.9 },
+      "rankings": { "0": 0.7, "1": 0.3 }
     }
   ]
 }
