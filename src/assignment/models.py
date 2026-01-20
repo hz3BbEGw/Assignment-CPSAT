@@ -11,8 +11,6 @@ class CriterionConfig(BaseModel):
     type: CriterionType
     # For prerequisite type: all students in group must meet this minimum ratio
     min_ratio: Optional[float] = None
-    # For minimize: the target average (defaults to global mean when omitted)
-    target: Optional[float] = None
 
 class GroupConfig(BaseModel):
     id: int
