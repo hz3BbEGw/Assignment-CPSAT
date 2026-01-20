@@ -42,6 +42,7 @@ class ProblemInput(BaseModel):
     groups: List[GroupConfig]
     students: List[StudentConfig]
     exclude: List[List[int]] = []  # List of student_id pairs that cannot be in the same group
+    max_time_in_seconds: Optional[float] = 60  # Maximum time to spend solving (default: 60 seconds)
 
 class AssignmentResult(BaseModel):
     student_id: int
