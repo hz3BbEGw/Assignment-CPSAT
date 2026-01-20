@@ -41,6 +41,7 @@ class ProblemInput(BaseModel):
     students: List[StudentConfig]
     exclude: List[List[int]] = []  # List of student_id pairs that cannot be in the same group
     max_time_in_seconds: Optional[float] = 60  # Maximum time to spend solving (default: 60 seconds)
+    ranking_percentage: float = 50.0  # Target percentage of total penalty for rankings (default: 50.0)
 
 class AssignmentResult(BaseModel):
     student_id: int

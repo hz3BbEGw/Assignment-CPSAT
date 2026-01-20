@@ -115,6 +115,14 @@ def solve_assignment(data: ProblemInput) -> ProblemOutput:
     else:
         for c_name in criterion_names:
             global_means[c_name] = 0.0
+
+    # Count MINIMIZE and PULL criteria to calculate ranking weight
+    num_criteria = 0
+    for g in data.groups:
+        for c_name, configs in g.criteria.items():
+            for c_config in configs:
+                if c_config.type == CriterionType.MINIMIZE or c_config.type == CriterionType.PULL:
+                    num_criteria += 1
     
     # Criteria constraints and objectives
     for g in data.groups:
@@ -161,22 +169,35 @@ def solve_assignment(data: ProblemInput) -> ProblemOutput:
                         if s_val < threshold:
                             model.Add(x[s_id, g.id] == 0)
 
-    # Rankings objective (maximize total ranking, normalized to avoid dominance)
+    # Rankings objective (maximize total ranking, with specified percentage of total penalty)
     if has_rankings:
-        ranking_scale = max(1, SCALING_FACTOR // max(1, len(criterion_names)))
+        # Calculate ranking_weight to achieve target percentage
+        # Formula: ranking_weight = (percentage × num_criteria) / (100 - percentage)
+        if num_criteria == 0:
+            # When no other penalties, rankings is the only objective
+            ranking_weight = 1.0
+        else:
+            ranking_percentage = min(data.ranking_percentage, 99.99)
+            ranking_weight = (ranking_percentage * num_criteria) / (100 - ranking_percentage)
+
+        ranking_scale = SCALING_FACTOR
+        weighted_ranking_scale = int(ranking_scale * ranking_weight)
         ranking_terms = []
         for s in data.students:
             if not s.rankings:
                 continue
             for g_id in s.possible_groups:
                 rank_val = s.rankings.get(g_id, 0.0)
-                scaled_rank = int(rank_val * ranking_scale)
+                scaled_rank = int(rank_val * weighted_ranking_scale)
                 if (s.id, g_id) in x and scaled_rank:
                     ranking_terms.append(scaled_rank * x[s.id, g_id])
-        ranking_sum = model.NewIntVar(0, ranking_scale * len(data.students), "ranking_sum")
-        model.Add(ranking_sum == sum(ranking_terms) if ranking_terms else 0)
-        ranking_penalty = model.NewIntVar(0, ranking_scale * len(data.students), "ranking_penalty")
-        model.Add(ranking_penalty == ranking_scale * len(data.students) - ranking_sum)
+        ranking_sum = model.NewIntVar(0, weighted_ranking_scale * len(data.students), "ranking_sum")
+        if ranking_terms:
+            model.Add(ranking_sum == sum(ranking_terms))
+        else:
+            model.Add(ranking_sum == 0)
+        ranking_penalty = model.NewIntVar(0, weighted_ranking_scale * len(data.students), "ranking_penalty")
+        model.Add(ranking_penalty == weighted_ranking_scale * len(data.students) - ranking_sum)
         penalties.append(ranking_penalty)
 
     # Minimize sum of penalties
