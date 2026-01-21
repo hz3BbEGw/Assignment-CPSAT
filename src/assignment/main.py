@@ -8,13 +8,12 @@ from fastapi import FastAPI
 from .models import ProblemInput, ProblemOutput
 from .solver import solve_assignment
 
-# Initialize FastAPI app
 app = FastAPI(title="Assignment Solver API")
 
 @app.post("/solve", response_model=ProblemOutput)
 async def solve_endpoint(input_data: ProblemInput):
     """
-    Accepts student assignment problem input and returns the solution directly.
+    Accepts student assignment problem input and returns the solution.
     """
     result = await asyncio.to_thread(solve_assignment, input_data)
     return result

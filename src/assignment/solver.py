@@ -1,7 +1,6 @@
 from ortools.sat.python import cp_model
 from .models import ProblemInput, CriterionType, AssignmentResult, ProblemOutput, ProblemStats, RankingsStats, MinimizeCriterionStats
 
-# ortools works on integer values
 SCALING_FACTOR = 1000
 
 def _compute_stats(data: ProblemInput, assignments):
@@ -84,13 +83,12 @@ def solve_assignment(data: ProblemInput) -> ProblemOutput:
     for g in data.groups:
         relevant_student_vars = [x[s.id, g.id] for s in data.students if g.id in s.possible_groups]
         if not relevant_student_vars:
-             # If no students can be in this group but size > 0, it's infeasible
              if g.size > 0:
                  return ProblemOutput(assignments=[], status="INFEASIBLE")
              continue
         model.Add(sum(relevant_student_vars) == g.size)
         
-    # Exclusion constraints: forbidden pairs cannot be in the same group
+    # Exclusion constraints
     for pair in data.exclude:
         if len(pair) < 2:
             continue
@@ -102,7 +100,6 @@ def solve_assignment(data: ProblemInput) -> ProblemOutput:
     penalties = []
     has_rankings = any(s.rankings for s in data.students)
 
-    # Global mean per criterion (used for MINIMIZE targets).
     criterion_names = set()
     for g in data.groups:
         criterion_names.update(g.criteria.keys())
@@ -116,7 +113,6 @@ def solve_assignment(data: ProblemInput) -> ProblemOutput:
         for c_name in criterion_names:
             global_means[c_name] = 0.0
 
-    # Count MINIMIZE and PULL criteria to calculate ranking weight
     num_criteria = 0
     for g in data.groups:
         for c_name, configs in g.criteria.items():
@@ -131,23 +127,19 @@ def solve_assignment(data: ProblemInput) -> ProblemOutput:
             if not relevant_students:
                 continue
                 
-            # Scaled values
             scaled_vals = {s.id: int(s.values.get(c_name, 0) * SCALING_FACTOR) for s in relevant_students}
             
-            # group_sum = sum(scaled_val * x)
             group_sum = model.NewIntVar(0, SCALING_FACTOR * g.size, f'sum_{g.id}_{c_name}')
             model.Add(group_sum == sum(scaled_vals[s_id] * x[s_id, g.id] for s_id in scaled_vals))
             
             for c_config in configs:
                 if c_config.type == CriterionType.MINIMIZE:
-                    # target_sum = global_mean * group_size * SCALING_FACTOR
                     target_sum = int(global_means.get(c_name, 0) * g.size * SCALING_FACTOR)
 
                     # Penalize deviation from target to encourage even spread.
                     diff = model.NewIntVar(-SCALING_FACTOR * g.size, SCALING_FACTOR * g.size, f'diff_{g.id}_{c_name}_{c_config.type}')
                     model.Add(diff == group_sum - target_sum)
 
-                    # penalty = |diff|
                     penalty = model.NewIntVar(0, SCALING_FACTOR * g.size, f'p_{g.id}_{c_name}_{c_config.type}')
                     model.AddAbsEquality(penalty, diff)
                     
@@ -169,16 +161,12 @@ def solve_assignment(data: ProblemInput) -> ProblemOutput:
                     if c_config.min_ratio is None:
                         continue
                     threshold = int(c_config.min_ratio * SCALING_FACTOR)
-
                     # Any student below threshold cannot be in this group
                     for s_id, s_val in scaled_vals.items():
                         if s_val < threshold:
                             model.Add(x[s_id, g.id] == 0)
 
-    # Rankings objective (maximize total ranking, with specified percentage of total penalty)
     if has_rankings:
-        # Calculate ranking_weight to achieve target percentage
-        # Formula: ranking_weight = (percentage * num_criteria) / (100 - percentage)
         if num_criteria == 0:
             # When no other penalties, rankings is the only objective
             ranking_weight = 1.0
@@ -206,7 +194,7 @@ def solve_assignment(data: ProblemInput) -> ProblemOutput:
         model.Add(ranking_penalty == weighted_ranking_scale * len(data.students) - ranking_sum)
         penalties.append(ranking_penalty)
 
-    # Minimize sum of penalties
+    # Minimize the sum of penalties
     if penalties:
         model.Minimize(sum(penalties))
     
