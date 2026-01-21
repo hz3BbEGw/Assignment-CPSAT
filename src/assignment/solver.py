@@ -150,14 +150,20 @@ def solve_assignment(data: ProblemInput) -> ProblemOutput:
                     # penalty = |diff|
                     penalty = model.NewIntVar(0, SCALING_FACTOR * g.size, f'p_{g.id}_{c_name}_{c_config.type}')
                     model.AddAbsEquality(penalty, diff)
-                    penalties.append(penalty)
+                    
+                    scaled_penalty = model.NewIntVar(0, SCALING_FACTOR * g.size * g.size, f'sp_{g.id}_{c_name}_{c_config.type}')
+                    model.Add(scaled_penalty == penalty * g.size)
+                    penalties.append(scaled_penalty)
 
                 elif c_config.type == CriterionType.PULL:
                     max_val = max(scaled_vals.values()) if scaled_vals else 0
                     max_sum = max_val * g.size
                     penalty = model.NewIntVar(0, max_sum, f'p_{g.id}_{c_name}_{c_config.type}')
                     model.Add(penalty == max_sum - group_sum)
-                    penalties.append(penalty)
+                    
+                    scaled_penalty = model.NewIntVar(0, max_sum * g.size, f'sp_{g.id}_{c_name}_{c_config.type}')
+                    model.Add(scaled_penalty == penalty * g.size)
+                    penalties.append(scaled_penalty)
 
                 elif c_config.type == CriterionType.PREREQUISITE:
                     if c_config.min_ratio is None:
@@ -172,7 +178,7 @@ def solve_assignment(data: ProblemInput) -> ProblemOutput:
     # Rankings objective (maximize total ranking, with specified percentage of total penalty)
     if has_rankings:
         # Calculate ranking_weight to achieve target percentage
-        # Formula: ranking_weight = (percentage × num_criteria) / (100 - percentage)
+        # Formula: ranking_weight = (percentage * num_criteria) / (100 - percentage)
         if num_criteria == 0:
             # When no other penalties, rankings is the only objective
             ranking_weight = 1.0
