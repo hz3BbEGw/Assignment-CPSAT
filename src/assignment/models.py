@@ -10,6 +10,7 @@ class CriterionType(str, Enum):
 class CriterionConfig(BaseModel):
     type: CriterionType
     min_ratio: Optional[float] = None
+    required_amount: Optional[int] = None
 
 class GroupConfig(BaseModel):
     id: int

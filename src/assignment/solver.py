@@ -161,10 +161,22 @@ def solve_assignment(data: ProblemInput) -> ProblemOutput:
                     if c_config.min_ratio is None:
                         continue
                     threshold = int(c_config.min_ratio * SCALING_FACTOR)
-                    # Any student below threshold cannot be in this group
-                    for s_id, s_val in scaled_vals.items():
-                        if s_val < threshold:
-                            model.Add(x[s_id, g.id] == 0)
+                    if c_config.required_amount is None:
+                        # Any student below threshold cannot be in this group
+                        for s_id, s_val in scaled_vals.items():
+                            if s_val < threshold:
+                                model.Add(x[s_id, g.id] == 0)
+                    else:
+                        eligible_vars = [
+                            x[s_id, g.id]
+                            for s_id, s_val in scaled_vals.items()
+                            if s_val >= threshold
+                        ]
+                        if not eligible_vars:
+                            if c_config.required_amount > 0:
+                                return ProblemOutput(assignments=[], status="INFEASIBLE")
+                            continue
+                        model.Add(sum(eligible_vars) >= c_config.required_amount)
 
     if has_rankings:
         if num_criteria == 0:

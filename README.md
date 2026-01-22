@@ -4,7 +4,7 @@ This project provides a tool to assign students to groups based on various crite
 
 ## Features
 
-- **Prerequisites**: Ensure all group members meet a minimum requirement (e.g., language skills).
+- **Prerequisites**: Ensure a minimum requirement is met by all members or by a required count.
 - **Minimize**: Balance group averages for specific criteria (e.g., GPA, workload).
 - **Pull**: Maximize the total sum of member values for a criterion.
 - **Rankings**: Maximize total student preference for groups.
@@ -80,7 +80,7 @@ JSON
 
 ### Criteria Types
 
-1. **`prerequisite`**: Requires `min_ratio` (0.0 to 1.0). All members of the group must meet it.
+1. **`prerequisite`**: Requires `min_ratio` (0.0 to 1.0). If `required_amount` is unset, all members must meet it; otherwise at least `required_amount` members must.
 2. **`minimize`**: Balances group averages against the global mean for that criterion.
 3. **`pull`**: Maximizes the total sum of member values for that criterion.
 
@@ -96,7 +96,7 @@ JSON
       "id": 0,
       "size": 5,
       "criteria": {
-        "french": { "type": "prerequisite", "min_ratio": 0.4 }
+        "french": { "type": "prerequisite", "min_ratio": 0.4, "required_amount": 3 }
       }
     }
   ],
